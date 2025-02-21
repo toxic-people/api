@@ -1,0 +1,17 @@
+{
+  "name": "api",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.39.3",
+    "hono": "^4.7.2"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "drizzle-kit": "^0.30.4",
+    "wrangler": "^3.101.0"
+  }
+}

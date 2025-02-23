@@ -24,22 +24,24 @@ export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
       },
       async () => {
         const url: string = event.payload.url! as string;
-        const html = await new Scaper(this.env).fetch(url);
-
+        const { text, summary } = await new Scaper(this.env).fetch(url);
         const db = drizzle(this.env.MY_DB);
         await db
           .insert(contentTable)
           .values({
             url: url,
-            content: html,
-            contentOrg: "",
+            content: summary,
+            contentOrg: text,
             creator: "online",
             updated: new Date().getTime(),
             created: new Date().getTime(),
           })
           .onConflictDoUpdate({
             target: contentTable.url,
-            set: { content: html, updated: new Date().getTime() },
+            set: {
+              content: summary,
+              updated: new Date().getTime(),
+            },
             where: sql`${contentTable.url} != ${url}`,
           });
       }

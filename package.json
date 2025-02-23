@@ -7,12 +7,20 @@
   },
   "dependencies": {
     "@cloudflare/puppeteer": "^0.0.14",
+    "@langchain/community": "^0.3.32",
+    "@langchain/core": "^0.3.40",
+    "@langchain/openai": "^0.4.4",
+    "cheerio": "^1.0.0",
     "drizzle-orm": "^0.39.3",
     "hono": "^4.7.2",
-    "linkedom": "^0.18.9"
+    "langchain": "^0.3.19",
+    "linkedom": "^0.18.9",
+    "openai": "link:@langchain/llms/openai",
+    "unpdf": "^0.12.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
+    "@types/pdf-parse": "^1.1.4",
     "drizzle-kit": "^0.30.4",
     "wrangler": "^3.101.0"
   }

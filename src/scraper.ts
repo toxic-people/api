@@ -1,5 +1,13 @@
-import { parseHTML } from "linkedom";
 import puppeteer from "@cloudflare/puppeteer";
+import { ChatOpenAI } from "@langchain/openai";
+import { loadSummarizationChain } from "langchain/chains";
+import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
+import { getDocumentProxy, extractText } from "unpdf";
+import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
+import { StringOutputParser } from "@langchain/core/output_parsers";
+import { PromptTemplate } from "@langchain/core/prompts";
+import "cheerio";
+import { CheerioWebBaseLoader } from "@langchain/community/document_loaders/web/cheerio";
 
 export class Scaper {
   env: Env;
@@ -7,38 +15,78 @@ export class Scaper {
 
   constructor(env: Env) {
     this.env = env;
+    this.artifact = [];
+  }
+
+  async extractPdfText(pdfData: Uint8Array): Promise<string> {
+    const pdf = await getDocumentProxy(pdfData);
+    const { text } = await extractText(pdf, { mergePages: true });
+    return text;
+  }
+
+  async summarizeText(text: string, openaiKey: string): Promise<string> {
+    const textSplitter = new RecursiveCharacterTextSplitter({
+      chunkSize: 1000,
+      chunkOverlap: 100,
+    });
+
+    const docChunks = await textSplitter.createDocuments([text]);
+
+    const llm = new ChatOpenAI({
+      modelName: "gpt-4",
+      openAIApiKey: openaiKey,
+      temperature: 0,
+    });
+    const chain = loadSummarizationChain(llm, { type: "map_reduce" });
+    return await chain.run(docChunks);
   }
 
   stripHtml = (html: string): string => html.replace(/<[^>]*>/g, "");
 
-  async fetch(url: string): Promise<string> {
-    // 1. Fetch the target page’s HTML
-    const response = await fetch(url);
-    const html = await response.text();
+  async fetch(url: string): Promise<{ text: string; summary: string }> {
+    const browser = await puppeteer.launch(this.env.MYBROWSER);
+    const page = await browser.newPage();
+    await page.goto(url);
+    // const metrics = await page.metrics();
+    this.artifact = new Uint8Array(await page.pdf());
+    await this.env.BROWSER_KV_DEMO.put(url, this.artifact, {
+      expirationTtl: 60 * 60 * 24,
+    });
+    await browser.close();
 
-    const uri = new URL(url).toString(); // normalize
-    this.artifact = await this.env.BROWSER_KV_DEMO.get(uri, {
-      type: "arrayBuffer",
+    // cherio
+    const pTagSelector = "p";
+    const cheerioLoader = new CheerioWebBaseLoader(url, {
+      selector: pTagSelector,
+    });
+    const docs = await cheerioLoader.load();
+
+    // unpdf
+    //const document = await getDocumentProxy(new Uint8Array(this.artifact));
+    //const { text } = await extractText(document, { mergePages: true });
+
+    // Define prompt
+    const prompt = PromptTemplate.fromTemplate(
+      "Summarize the main themes in these retrieved doc: {context} "
+    );
+
+    const llm = new ChatOpenAI({
+      //@ts-ignore
+      apiKey: this.env.OPEN_API_KEY,
+      model: "gpt-4o-mini",
+      temperature: 0,
+    });
+    // Instantiate
+    const chain = await createStuffDocumentsChain({
+      llm: llm,
+      outputParser: new StringOutputParser(),
+      prompt,
     });
 
-    if (this.artifact === null) {
-      const browser = await puppeteer.launch(this.env.MYBROWSER);
-      const page = await browser.newPage();
-      await page.goto(url);
-      const metrics = await page.metrics();
-      console.log(metrics);
-      // this.artifact = (await page.screenshot()) as Buffer;
-      this.artifact = (await page.pdf()) as Buffer;
-      await this.env.BROWSER_KV_DEMO.put(url, this.artifact, {
-        expirationTtl: 60 * 60 * 24,
-      });
-      await browser.close();
-      return JSON.stringify(metrics); //tml);
-    }
+    const summary = await chain.invoke({ context: docs });
 
-    // 2. Parse the HTML
-    // const { document } = parseHTML(html);
-    return html; //tml);
+    console.log(summary);
+    return { text: docs[0].pageContent, summary: summary };
   }
 }
 

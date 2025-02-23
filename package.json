@@ -6,8 +6,10 @@
     "cf-typegen": "wrangler types && mv worker-configuration.d.ts src/"
   },
   "dependencies": {
+    "@cloudflare/puppeteer": "^0.0.14",
     "drizzle-orm": "^0.39.3",
-    "hono": "^4.7.2"
+    "hono": "^4.7.2",
+    "linkedom": "^0.18.9"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",

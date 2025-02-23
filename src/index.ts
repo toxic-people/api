@@ -1,6 +1,11 @@
-import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import ToxicWorkflow from "./ToxicWorkflow";
+export { ToxicWorkflow };
+
+type Params = {
+  url: string;
+};
 
 type Env = {
   Bindings: {
@@ -10,6 +15,9 @@ type Env = {
     SECRET_TURNSTYLE_KEY: string;
     OPEN_API_KEY: string;
     IN_QUEUE: Queue;
+    MY_WORKFLOW: Workflow;
+    BROWSER_KV_DEMO: KVNamespace;
+    MYBROWSER: Fetcher;
   };
 };
 
@@ -18,6 +26,31 @@ app.use("*", cors());
 
 app.get("/", (c) => {
   return c.json({ status: "OK", version: "0.0.1" });
+});
+
+app.post("/0/getImage", async (c) => {
+  const data = await c.req.json();
+  const url = data.url;
+  const img = await c.env.BROWSER_KV_DEMO.get(url, { type: "arrayBuffer" });
+  return new Response(img, {
+    headers: {
+      "content-type": "image/jpeg",
+    },
+  });
+});
+
+app.post("/0/set", async (c) => {
+  const data = await c.req.json();
+  console.log(data);
+  await c.env.KV.put("MAIN", JSON.stringify(data));
+  return c.json({ status: "OK" });
+});
+
+app.get("/0/get/:key", async (c) => {
+  const key = c.req.param("key");
+  const str = await c.env.KV.get(key);
+  const data = JSON.parse(str!);
+  return c.json(data);
 });
 
 app.post("/0/add", async (c) => {
@@ -49,4 +82,29 @@ app.post("/0/add", async (c) => {
   return c.json({ status: "REJECTED" });
 });
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async queue(batch: MessageBatch<Error>, envQueue: Env): Promise<void> {
+    for (const message of batch.messages) {
+      console.log(JSON.stringify(message));
+      try {
+        switch (batch.queue) {
+          case "toxicpeople-in":
+            console.log("handling toxicpeople-i message", message.body);
+
+            //@ts-ignore
+            let instance = await envQueue.MY_WORKFLOW.create({
+              id: crypto.randomUUID(),
+              //@ts-ignore
+              params: { url: message.body.url },
+            });
+            console.log("workflow instance", JSON.stringify(instance));
+            break;
+        }
+        message.ack();
+      } catch (error) {
+        console.error("Failed to process message:", error);
+      }
+    }
+  },
+};

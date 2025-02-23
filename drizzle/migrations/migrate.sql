@@ -1,6 +1,8 @@
+
+DROP TABLE content;
 CREATE TABLE content (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  url TEXT NOT NULL,
+  url TEXT NOT NULL UNIQUE,
   content TEXT NOT NULL,
   contentOrg TEXT NOT NULL,
   creator TEXT NOT NULL,
@@ -8,6 +10,8 @@ CREATE TABLE content (
   created INTEGER NOT NULL
 );
 
+
+DROP TABLE person;
 CREATE TABLE person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,

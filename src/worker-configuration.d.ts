@@ -2,7 +2,10 @@
 
 interface Env {
 	KV: KVNamespace;
+	BROWSER_KV_DEMO: KVNamespace;
 	MY_DB: D1Database;
 	IN_QUEUE: Queue;
+	MYBROWSER: Fetcher;
 	AI: Ai;
+	MY_WORKFLOW: Workflow;
 }

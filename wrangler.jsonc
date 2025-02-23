@@ -3,10 +3,18 @@
   "name": "toxicpeople-api",
   "main": "src/index.ts",
   "compatibility_date": "2025-02-21",
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
 "kv_namespaces": [
     {
       "binding": "KV",
       "id": "bef052500c154d58aeb115d0a8ecd233"
+    },
+    {
+      "binding": "BROWSER_KV_DEMO",
+      "id": "4f6283c5dd70440da52f1a4e776eb883",
+      "preview_id": "d3c273a24be84ae8916159b018bd7ca0"
     }
   ],
  "d1_databases": [
@@ -30,8 +38,25 @@
           "binding": "IN_QUEUE",
           "queue": "toxicpeople-in"
         }
-      ]
-    }
+      ],
+          "consumers": [
+            {
+              "queue": "toxicpeople-in",
+              "max_batch_size": 100,
+              "max_batch_timeout": 30
+            }
+          ]
+    },
+    "workflows": [
+      {
+        "name": "toxic-people",
+        "binding": "MY_WORKFLOW",
+        "class_name": "ToxicWorkflow"
+      }
+    ],
+    "browser": {
+    "binding": "MYBROWSER"
+  }
   }
 
 

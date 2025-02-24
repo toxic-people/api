@@ -21,6 +21,8 @@ type Env = {
   };
 };
 
+export var globalEnv: Env;
+
 const app = new Hono<Env>();
 app.use("*", cors());
 
@@ -52,7 +54,6 @@ app.get("/0/get/:key", async (c) => {
   const data = JSON.parse(str!);
   return c.json(data);
 });
-
 app.post("/0/add", async (c) => {
   const body = await c.req.json();
   const urlSubmit = body.urlSubmit;
@@ -96,7 +97,7 @@ export default {
             let instance = await envQueue.MY_WORKFLOW.create({
               id: crypto.randomUUID(),
               //@ts-ignore
-              params: { url: message.body.url },
+              params: { url: message.body.url, env: envQueue },
             });
             console.log("workflow instance", JSON.stringify(instance));
             break;

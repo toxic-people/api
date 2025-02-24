@@ -7,9 +7,18 @@ import { Scaper } from "./scraper";
 import { drizzle } from "drizzle-orm/d1";
 import { contentTable } from "./schema";
 import { sql } from "drizzle-orm";
+import { Swarm } from "./swarm/core";
+import { prettyPrintMessages } from "./swarm/util";
+import { Response } from "./swarm/types";
+import { Registry } from "./swarm/registry";
+
+export var registry = new Registry();
 
 export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
   async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
+    // Singleton
+    registry.init(this.env);
+
     // await step.sleep("wait on something", "5 second");
     await step.do(
       "Fetch Page",
@@ -20,8 +29,45 @@ export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
           delay: "5 second",
           backoff: "exponential",
         },
-        timeout: "2 minutes",
+        timeout: "1 minutes",
       },
+      async () => {
+        var count = 0;
+        // create the first Agent
+        //@ts-ignore
+        const config = { apiKey: this.env.OPEN_API_KEY, env: this.env };
+        const client = new Swarm(config);
+        console.log("Starting Swarm CLI 🐝");
+        const messages: any[] = [];
+        const url: string = event.payload.url! as string;
+        let agent = registry.getAgent("Scraper");
+
+        messages.push({ role: "user", content: "use this url: " + url });
+
+        console.log("Agent starts messages ", messages);
+        console.log("Start Agent ", agent.name);
+        while (count < 5) {
+          console.log("Looping", count);
+          count += 1;
+          const response = await client.run({
+            agent,
+            messages,
+            max_turns: 3,
+            execute_tools: true,
+            debug: true,
+          });
+          const completionResponse = response as Response;
+          messages.push(...completionResponse.messages);
+          agent = completionResponse.agent!;
+          if (agent.name == "end") {
+            console.log("breaking ");
+            console.log(JSON.stringify(completionResponse.messages));
+            break;
+          }
+        }
+        console.log("Workflow complete ");
+      }
+      /*
       async () => {
         const url: string = event.payload.url! as string;
         const { text, summary } = await new Scaper(this.env).fetch(url);
@@ -45,6 +91,7 @@ export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
             where: sql`${contentTable.url} != ${url}`,
           });
       }
+      */
     );
   }
 }

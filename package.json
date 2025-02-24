@@ -11,15 +11,19 @@
     "@langchain/core": "^0.3.40",
     "@langchain/openai": "^0.4.4",
     "cheerio": "^1.0.0",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.39.3",
     "hono": "^4.7.2",
     "langchain": "^0.3.19",
+    "langfuse": "^3.35.2",
     "linkedom": "^0.18.9",
+    "lodash": "^4.17.21",
     "openai": "link:@langchain/llms/openai",
     "unpdf": "^0.12.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
+    "@types/lodash": "^4.17.15",
     "@types/pdf-parse": "^1.1.4",
     "drizzle-kit": "^0.30.4",
     "wrangler": "^3.101.0"

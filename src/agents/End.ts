@@ -8,7 +8,6 @@ export class End extends Agent {
 
   tool_choice = "none"; //'none', 'auto', and 'required'.
   parallel_tool_calls = false;
-
   env: Env;
   name = "End";
 }

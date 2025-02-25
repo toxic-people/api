@@ -33,6 +33,8 @@ export interface AgentFunction {
   descriptor: FunctionDescriptor;
 }
 
+
+
 /**
  * Represents an agent interacting with the Swarm.
  */
@@ -77,6 +79,7 @@ export class Response {
 /**
  * Represents the result of a function executed by an agent.
  */
+
 export class Result {
   value: string;
   agent?: Agent;

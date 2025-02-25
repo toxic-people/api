@@ -3,18 +3,18 @@ import {
   WorkflowStep,
   WorkflowEvent,
 } from "cloudflare:workers";
-import { Scaper } from "./scraper";
+import { Scaper } from "../scraper";
 import { drizzle } from "drizzle-orm/d1";
-import { contentTable } from "./schema";
+import { contentTable } from "../schema";
 import { sql } from "drizzle-orm";
-import { Swarm } from "./swarm/core";
-import { prettyPrintMessages } from "./swarm/util";
-import { Response } from "./swarm/types";
-import { Registry } from "./swarm/registry";
+import { Swarm } from "../swarm/core";
+import { prettyPrintMessages } from "../swarm/util";
+import { Response } from "../swarm/types";
+import { Registry } from "../swarm/registry";
 
 export var registry = new Registry();
 
-export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
+export default class AddWorkflow extends WorkflowEntrypoint<Env, Params> {
   async run(event: WorkflowEvent<Params>, step: WorkflowStep) {
     // Singleton
     registry.init(this.env);
@@ -46,27 +46,47 @@ export default class ToxicWorkflow extends WorkflowEntrypoint<Env, Params> {
 
         console.log("Agent starts messages ", messages);
         console.log("Start Agent ", agent.name);
-        while (count < 5) {
-          console.log("Looping", count);
-          count += 1;
-          const response = await client.run({
-            agent,
-            messages,
-            max_turns: 3,
-            execute_tools: true,
-            debug: true,
+        // while (count < 5) {
+        console.log("Looping", count);
+        count += 1;
+        const response = await client.run({
+          agent,
+          messages,
+          max_turns: 3,
+          execute_tools: true,
+          debug: true,
+        });
+        const completionResponse = response as Response;
+        messages.push(...completionResponse.messages);
+        agent = completionResponse.agent!;
+        console.log("End========================= ");
+        const report =
+          completionResponse.messages[completionResponse.messages.length - 1]
+            .content;
+        console.log(JSON.stringify(report));
+        const db = drizzle(this.env.MY_DB);
+        await db
+          .insert(contentTable)
+          .values({
+            url: url,
+            content: report,
+            contentOrg: "",
+            creator: "online",
+            updated: new Date().getTime(),
+            created: new Date().getTime(),
+          })
+          .onConflictDoUpdate({
+            target: contentTable.url,
+            set: {
+              content: report,
+              updated: new Date().getTime(),
+            },
+            where: sql`${contentTable.url} != ${url}`,
           });
-          const completionResponse = response as Response;
-          messages.push(...completionResponse.messages);
-          agent = completionResponse.agent!;
-          if (agent.name == "end") {
-            console.log("breaking ");
-            console.log(JSON.stringify(completionResponse.messages));
-            break;
-          }
-        }
-        console.log("Workflow complete ");
       }
+
+      // console.log("Workflow complete ");
+      //}
       /*
       async () => {
         const url: string = event.payload.url! as string;

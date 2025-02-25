@@ -15,6 +15,8 @@ DROP TABLE person;
 CREATE TABLE person (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
+  country TEXT NOT NULL,
+  wikipediaUrl TEXT NOT NULL UNIQUE,
   content TEXT NOT NULL,
   ratingDisplay TEXT NOT NULL,
   rating INTEGER NOT NULL,

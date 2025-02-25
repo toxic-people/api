@@ -1,7 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import ToxicWorkflow from "./ToxicWorkflow";
-export { ToxicWorkflow };
+import AddWorkflow from "./workflows/AddWorkflow";
+export { AddWorkflow };
+import NightlyWorkflow from "./workflows/NightlyWorkflow";
+export { NightlyWorkflow };
 
 type Params = {
   url: string;
@@ -27,6 +29,16 @@ const app = new Hono<Env>();
 app.use("*", cors());
 
 app.get("/", (c) => {
+  return c.json({ status: "OK", version: "0.0.1" });
+});
+
+app.get("/0/nightly", async (c) => {
+  //@ts-ignore
+  let instance = await env.NIGHTLY_WORKFLOW.create({
+    id: crypto.randomUUID(),
+    //@ts-ignore
+    params: { env: env },
+  });
   return c.json({ status: "OK", version: "0.0.1" });
 });
 
@@ -107,5 +119,14 @@ export default {
         console.error("Failed to process message:", error);
       }
     }
+  },
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    //@ts-ignore
+    let instance = await env.NIGHTLY_WORKFLOW.create({
+      id: crypto.randomUUID(),
+      //@ts-ignore
+      params: { env: env },
+    });
+    ctx.waitUntil(Promise.resolve());
   },
 };

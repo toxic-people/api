@@ -2,7 +2,7 @@ import { GTP4_MINI } from "../swarm/registry";
 import { Agent, AgentFunction, FunctionDescriptor } from "../swarm/types";
 import puppeteer from "@cloudflare/puppeteer";
 import { getDocumentProxy, extractText } from "unpdf";
-import { registry } from "../ToxicWorkflow";
+import { registry } from "../workflows/AddWorkflow";
 
 export class Scraper extends Agent {
   constructor(env: Env) {
@@ -20,7 +20,8 @@ export class Scraper extends Agent {
   name = "Scraper";
   model = GTP4_MINI;
   instructions =
-    "You are a Summary Agent creating a short summary. Use the fetch tool to download the url in user content from the Internet and create a summary of the content, next transfer the conversation to the end agent";
+    "You are a Summary Agent creating a short summary and find entities. Report in JSON: {summary:string, entities:{people:[string], organisations:[string], locations:[string]}. " +
+    "Use the fetch tool to download the url in user content from the Internet and finish by  transfering the conversation to the end agent";
 
   d: FunctionDescriptor = {
     name: "fetch",

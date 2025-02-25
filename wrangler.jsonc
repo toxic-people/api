@@ -49,14 +49,23 @@
     },
     "workflows": [
       {
-        "name": "toxic-people",
+        "name": "toxic-add",
         "binding": "MY_WORKFLOW",
-        "class_name": "ToxicWorkflow"
+        "class_name": "AddWorkflow"
+      },
+      {
+        "name": "toxic-night",
+        "binding": "NIGHTLY_WORKFLOW",
+        "class_name": "NightlyWorkflow"
       }
     ],
     "browser": {
-    "binding": "MYBROWSER"
-  }
+      "binding": "MYBROWSER"
+    },
+    
+    "triggers": {
+      "crons":["0 0 * * *"]
+    }
   }
 
 

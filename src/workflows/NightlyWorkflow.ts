@@ -4,11 +4,11 @@ import {
   WorkflowEvent,
 } from "cloudflare:workers";
 import { Swarm } from "../swarm/core";
-import { Response, Report } from "../swarm/types";
+import { Response } from "../swarm/types";
 import { Registry } from "../swarm/registry";
 import { personTable } from "../schema";
 import { drizzle } from "drizzle-orm/d1";
-import { Person } from "../types";
+import { Person, Report } from "../types";
 import { sql } from "drizzle-orm";
 export var registry = new Registry();
 
@@ -69,7 +69,7 @@ export default class NightlyWorkflow extends WorkflowEntrypoint<Env, Params> {
           const db = drizzle(this.env.MY_DB);
           await db
             .insert(personTable)
-            .values(report)
+            .values(arr)
             .onConflictDoUpdate({
               target: personTable.wikipediaUrl,
               set: {

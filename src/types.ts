@@ -6,8 +6,6 @@ export type Report = {
 };
 
 export type Person = {
-  id: number | undefined;
-  rank: number;
   name: string;
   country: string;
   wikipediaUrl: string;
@@ -15,5 +13,17 @@ export type Person = {
   ratingDisplay: string;
   rating: number;
   updated: number;
+  created: number;
+};
+
+export type People = {
+  rank: number;
+  name: string;
+  country: string;
+  wikipediaUrl: string;
+};
+
+export type Render = {
+  people: People[];
   created: number;
 };

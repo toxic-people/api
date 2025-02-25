@@ -14,11 +14,10 @@ export const personTable = sqliteTable("person", {
   id: int("id").primaryKey({ autoIncrement: true }),
   name: text("name").notNull(),
   country: text("country").notNull(),
+  content: text("content").notNull(),
   wikipediaUrl: text("wikipediaUrl").notNull().unique(),
   ratingDisplay: text("ratingDisplay").notNull(),
   rating: int("rating").notNull(),
   updated: int("updated").notNull(),
   created: int("created").notNull(),
 });
-
-
